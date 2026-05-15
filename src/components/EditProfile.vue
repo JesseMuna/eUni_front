@@ -4,6 +4,7 @@ import api from '@/services/api'
 
 const userDetails = ref(JSON.parse(localStorage.getItem('user'))) // make reactive so UI updates
 const tab = ref(1)
+const error = ref('')
 
 // Course & unit state
 const courses = ref([])
@@ -22,6 +23,8 @@ const university = ref(userDetails.value?.university || '')
 const currentPassword = ref('')
 const newPassword = ref('')
 const about = ref(userDetails.value?.description || '')
+const profilePicture = ref('')
+const showPfpDialog = ref(false)
 
 const detailLoading = ref(false)
 const detailSuccess = ref('')
@@ -82,6 +85,35 @@ const saveAbout = () => {
     updateDetail({ description: about.value.trim() })
 }
 
+
+async function addProfilePicture(){
+    if (!profilePicture.value) return
+    const formData = new FormData()
+    formData.append('profilePicture', profilePicture.value)
+    try{
+        const {data} = await api.post('/user/profile-picture', formData,{
+            headers:{
+                'Content-Type': 'multipart/form-data'
+            }
+        })
+        const updated = {...userDetails.value, profilePicture: data.profilePicture}
+        userDetails.value = updated
+        localStorage.setItem('user', JSON.stringify(updated))
+        showPfpDialog.value = false
+    } catch(err){
+        error.value = err.response?.data?.message || 'Upload Failed'
+    }
+    
+}
+
+function onFileChange(e){
+    profilePicture.value = e.target.files[0]
+}
+
+function close(){
+    showPfpDialog.value = false
+}
+
 // Fetch all courses on mount
 onMounted(async () => {
     try {
@@ -134,6 +166,8 @@ const saveUnits = async () => {
         savingUnits.value = false
     }
 }
+
+
 </script>
 
 <template>
@@ -147,16 +181,38 @@ const saveUnits = async () => {
         <v-card class="mb-4">
             <v-row align="center">
                 <v-avatar size="100" class="ma-2">
-                    <v-img src="bmw.jpg"></v-img>
+                    <v-img :src="userDetails.profilePicture 
+                        ? `http://127.0.0.1:8000/storage/${userDetails.profilePicture}` 
+                        : 'bmw.jpg'"
+                        cover>
+                    </v-img>
                 </v-avatar>
                 <v-col>
                     <v-card-title>{{ userDetails.name }}</v-card-title>
                     <v-card-subtitle>{{ userDetails.email }}</v-card-subtitle>
                 </v-col>
                 <v-spacer></v-spacer>
-                <v-btn class="ma-2">Change Photo</v-btn>
+                <v-btn class="ma-2" @click="showPfpDialog = true">Change Photo</v-btn>
             </v-row>
         </v-card>
+
+        <v-dialog v-model="showPfpDialog" max-width="600">
+            <v-card>
+                <v-card-title class="pa-6">Change Profile Picture</v-card-title>
+                <v-card-text>
+                    <input type="file" accept="image/*" @change="onFileChange" />
+                    <p v-if="error" class="text-red mt-2">{{ error }}</p>
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn text="Close" variant="plain" @click="close()"></v-btn>
+                    <v-btn color="primary" text="Save" variant="tonal"
+                        :disabled="!profilePicture"
+                        @click="addProfilePicture()"></v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
 
         <!-- Tutoring units section -->
         <p class="text-h5 mb-2">Tutoring Units</p>

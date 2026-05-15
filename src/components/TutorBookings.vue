@@ -27,7 +27,6 @@ const updateStatus = async (booking, status) => {
     updatingId.value = booking.id
     try {
         const { data } = await api.patch(`/bookings/${booking.id}/status`, { status })
-        // Update in place so UI reflects immediately
         const idx = bookings.value.findIndex(b => b.id === booking.id)
         if (idx !== -1) bookings.value[idx] = { ...bookings.value[idx], status: data.booking.status }
     } catch (e) {
@@ -37,15 +36,20 @@ const updateStatus = async (booking, status) => {
     }
 }
 
+const deleteBooking = async (id) => {
+    try {
+        await api.delete(`/bookings/${id}`)
+        bookings.value = bookings.value.filter(b => b.id !== id)
+    } catch (e) {
+        error.value = e.response?.data?.message || 'Failed to delete booking'
+    }
+}
+
 const formatDate = (dt) => {
     if (!dt) return 'No preferred time set'
     return new Date(dt).toLocaleString('en-KE', {
         dateStyle: 'medium', timeStyle: 'short'
     })
-}
-
-const statusColor = (status) => {
-    return { pending: 'orange', accepted: 'green', rejected: 'red' }[status] ?? 'grey'
 }
 </script>
 
@@ -57,7 +61,7 @@ const statusColor = (status) => {
             {{ error }}
         </v-alert>
 
-        <v-progress-circular v-if="loading" indeterminate class="ma-4"></v-progress-circular>
+        <v-progress-circular v-if="loading" indeterminate class="ma-4" />
 
         <template v-else>
 
@@ -67,30 +71,20 @@ const statusColor = (status) => {
             <v-card v-for="booking in pending" :key="booking.id" class="mb-3 pa-3" variant="outlined">
                 <v-row align="center">
                     <v-avatar size="45" class="ma-2">
-                        <v-img src="/bmw.jpg"></v-img>
+                        <v-img src="/bmw.jpg" />
                     </v-avatar>
                     <v-col>
                         <p class="font-weight-bold mb-0">{{ booking.student.name }}</p>
                         <p class="text-caption text-grey mb-0">{{ booking.student.university }}</p>
-                        <p class="text-caption mb-0">
-                            Unit: <strong>{{ booking.unit.name }}</strong>
-                        </p>
-                        <p class="text-caption mb-0">
-                            Session: <strong>{{ booking.session_length }}</strong>
-                        </p>
-                        <p class="text-caption mb-0">
-                            Preferred time: <strong>{{ formatDate(booking.scheduled_at) }}</strong>
-                        </p>
+                        <p class="text-caption mb-0">Unit: <strong>{{ booking.unit?.name ?? 'N/A' }}</strong></p>
+                        <p class="text-caption mb-0">Session: <strong>{{ booking.session_length }}</strong></p>
+                        <p class="text-caption mb-0">Preferred time: <strong>{{ formatDate(booking.scheduled_at) }}</strong></p>
                     </v-col>
                     <div class="d-flex flex-column ga-2 ma-2">
                         <v-btn color="green" size="small" :loading="updatingId === booking.id"
-                            @click="updateStatus(booking, 'accepted')">
-                            Accept
-                        </v-btn>
+                            @click="updateStatus(booking, 'accepted')">Accept</v-btn>
                         <v-btn color="red" variant="outlined" size="small" :loading="updatingId === booking.id"
-                            @click="updateStatus(booking, 'rejected')">
-                            Reject
-                        </v-btn>
+                            @click="updateStatus(booking, 'rejected')">Reject</v-btn>
                     </div>
                 </v-row>
             </v-card>
@@ -101,15 +95,19 @@ const statusColor = (status) => {
             <v-card v-for="booking in accepted" :key="booking.id" class="mb-3 pa-3" variant="outlined">
                 <v-row align="center">
                     <v-avatar size="45" class="ma-2">
-                        <v-img src="/bmw.jpg"></v-img>
+                        <v-img src="/bmw.jpg" />
                     </v-avatar>
                     <v-col>
                         <p class="font-weight-bold mb-0">{{ booking.student.name }}</p>
-                        <p class="text-caption mb-0">Unit: <strong>{{ booking.unit.name }}</strong></p>
+                        <p class="text-caption mb-0">Unit: <strong>{{ booking.unit?.name ?? 'N/A' }}</strong></p>
                         <p class="text-caption mb-0">Session: <strong>{{ booking.session_length }}</strong></p>
                         <p class="text-caption mb-0">{{ formatDate(booking.scheduled_at) }}</p>
                     </v-col>
-                    <v-chip color="green" class="ma-2">Accepted</v-chip>
+                    <div class="d-flex flex-column ga-2 ma-2">
+                        <v-chip color="green">Accepted</v-chip>
+                        <v-btn color="red" variant="outlined" size="small" prepend-icon="mdi-delete"
+                            @click="deleteBooking(booking.id)">Delete</v-btn>
+                    </div>
                 </v-row>
             </v-card>
 
@@ -119,14 +117,18 @@ const statusColor = (status) => {
             <v-card v-for="booking in rejected" :key="booking.id" class="mb-3 pa-3" variant="outlined opacity-70">
                 <v-row align="center">
                     <v-avatar size="45" class="ma-2">
-                        <v-img src="/bmw.jpg"></v-img>
+                        <v-img src="/bmw.jpg" />
                     </v-avatar>
                     <v-col>
                         <p class="font-weight-bold mb-0">{{ booking.student.name }}</p>
-                        <p class="text-caption mb-0">Unit: <strong>{{ booking.unit.name }}</strong></p>
+                        <p class="text-caption mb-0">Unit: <strong>{{ booking.unit?.name ?? 'N/A' }}</strong></p>
                         <p class="text-caption mb-0">Session: <strong>{{ booking.session_length }}</strong></p>
                     </v-col>
-                    <v-chip color="red" class="ma-2">Rejected</v-chip>
+                    <div class="d-flex flex-column ga-2 ma-2">
+                        <v-chip color="red">Rejected</v-chip>
+                        <v-btn color="red" variant="outlined" size="small" prepend-icon="mdi-delete"
+                            @click="deleteBooking(booking.id)">Delete</v-btn>
+                    </div>
                 </v-row>
             </v-card>
 

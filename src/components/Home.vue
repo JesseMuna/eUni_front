@@ -19,6 +19,15 @@ const booking = ref(false)
 const bookingSuccess = ref(false)
 const bookingError = ref(null)
 
+// View dialog
+const viewDialog = ref(false)
+const viewedTutor = ref(null)
+
+const openView = (tutor) => {
+    viewedTutor.value = tutor
+    viewDialog.value = true
+}
+
 onMounted(async () => {
     try {
         const { data } = await api.get('/courses')
@@ -83,7 +92,9 @@ const confirmBooking = async () => {
         })
         bookingSuccess.value = true
     } catch (e) {
-        bookingError.value = e.response?.data?.message || 'Booking failed'
+        bookingError.value = e.response?.data?.errors
+            ? Object.values(e.response.data.errors).flat().join(', ')
+            : e.response?.data?.message || 'Booking failed'
     } finally {
         booking.value = false
     }
@@ -146,7 +157,7 @@ const confirmBooking = async () => {
                                         </v-card-text>
                                     </v-col>
                                     <div class="ma-2 d-flex flex-column ga-2">
-                                        <v-btn color="pink" :to="`/tutor/${tutor.id}`" size="small">
+                                        <v-btn color="pink" size="small" @click="openView(tutor)">
                                             View
                                         </v-btn>
                                         <v-btn color="primary" size="small" @click="openBooking(tutor)">
@@ -203,6 +214,61 @@ const confirmBooking = async () => {
                         </v-btn>
                     </v-card-actions>
                 </template>
+            </v-card>
+        </v-dialog>
+
+        <!-- Tutor view dialog -->
+        <v-dialog v-model="viewDialog" max-width="500">
+            <v-card class="pa-4" v-if="viewedTutor">
+                <v-row align="center" class="mb-3">
+                    <v-avatar size="60" class="ma-3">
+                        <v-img src="/bmw.jpg"></v-img>
+                    </v-avatar>
+                    <v-col>
+                        <h2 class="text-h6">{{ viewedTutor.name }}</h2>
+                        <p class="text-caption text-grey mb-0">{{ viewedTutor.university }}</p>
+                    </v-col>
+                </v-row>
+
+                <v-divider class="mb-3"></v-divider>
+
+                <v-list density="compact">
+                    <v-list-item prepend-icon="mdi-phone">
+                        <v-list-item-title>
+                            {{ viewedTutor.phoneNumber ?? 'Phone not provided' }}
+                        </v-list-item-title>
+                    </v-list-item>
+                    <v-list-item prepend-icon="mdi-text" v-if="viewedTutor.description">
+                        <v-list-item-title class="text-wrap">
+                            {{ viewedTutor.description }}
+                        </v-list-item-title>
+                    </v-list-item>
+                    <v-list-item prepend-icon="mdi-text" v-else>
+                        <v-list-item-title class="text-grey">No description provided.</v-list-item-title>
+                    </v-list-item>
+                </v-list>
+
+                <!-- Units -->
+                <div class="mt-3" v-if="viewedTutor.tutoring_units?.length">
+                    <p class="text-caption font-weight-bold mb-2">Units taught:</p>
+                    <v-chip
+                        v-for="unit in viewedTutor.tutoring_units"
+                        :key="unit.id"
+                        class="ma-1"
+                        size="small"
+                        color="primary"
+                        variant="outlined">
+                        {{ unit.name }}
+                    </v-chip>
+                </div>
+
+                <v-card-actions class="mt-3">
+                    <v-spacer></v-spacer>
+                    <v-btn variant="text" @click="viewDialog = false">Close</v-btn>
+                    <v-btn color="primary" @click="viewDialog = false; openBooking(viewedTutor)">
+                        Book
+                    </v-btn>
+                </v-card-actions>
             </v-card>
         </v-dialog>
 

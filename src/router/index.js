@@ -8,6 +8,8 @@ import TutorProfile from '@/components/TutorProfile.vue'
 import EditProfile from '@/components/EditProfile.vue'
 import Admin from '@/components/Admin.vue'
 import TutorBookings from '@/components/TutorBookings.vue'
+import LandingPage from '@/components/LandingPage.vue'
+import Requests from '@/components/Requests.vue'
 
 
 const router = createRouter({
@@ -16,6 +18,11 @@ const router = createRouter({
 
     {
       path: '/',
+      name: 'landingpage',
+      component: LandingPage
+    },
+    {
+      path: '/home',
       name: 'home',
       component: Home
     },
@@ -38,6 +45,12 @@ const router = createRouter({
       path: '/tutor',
       name: 'tutor',
       component: Tutor
+    },
+
+    {
+      path: '/tutor/:id',
+      name: 'tutorDetail',
+      component: TutorProfile
     },
 
     {
@@ -69,6 +82,12 @@ const router = createRouter({
       path:'/mybookings',
       name: 'TutorBookings',
       component: TutorBookings
+    },
+
+    {
+      path: '/requests',
+      name: 'requests',
+      component: Requests
     }
 
 

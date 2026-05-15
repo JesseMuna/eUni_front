@@ -2,17 +2,28 @@
 import { ref, onMounted } from 'vue'
 import api from '@/services/api'
 
-const userDetails = JSON.parse(localStorage.getItem('user'))
-const tutorUnits = ref({})   // grouped by course name
+const userDetails = ref(JSON.parse(localStorage.getItem('user')))
+const tutorUnits = ref({})   
 const loading = ref(true)
 
 onMounted(async () => {
     try {
-        const { data } = await api.get('/tutor/units')
-        tutorUnits.value = data.units
+        const {data: unitsData} = await api.get('/tutor/units')
+        tutorUnits.value = unitsData.units
     } catch (e) {
         console.error('Failed to load units', e)
     } finally {
+        loading.value = false
+    }
+
+    try{
+        const {data: userData} = await api.get('/user/me')
+        userDetails.value = userData.userData
+        localStorage.setItem('user', JSON.stringify(userData.user))
+
+    }catch(e){
+        console.error('Failed to load Units', e)
+    }finally{
         loading.value = false
     }
 })
@@ -29,7 +40,11 @@ onMounted(async () => {
                         <v-col>
                             <div class="d-flex align-center ga-4 pa-8">
                                 <v-avatar size="120">
-                                    <v-img src="bmw.jpg" width="50"></v-img>
+                                    <v-img :src="userDetails.profilePicture 
+                                        ? `http://127.0.0.1:8000/storage/${userDetails.profilePicture}` 
+                                        : 'bmw.jpg'"
+                                        cover>
+                                    </v-img>
                                 </v-avatar>
                                 <div>
                                     <v-card-title class="pa-0">Name: {{ userDetails.name }}</v-card-title>

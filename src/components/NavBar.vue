@@ -16,10 +16,14 @@ async function handlelogout() {
 </script>
 <template>
     <v-app-bar color="#DB7093">
-        <v-app-bar-title>eUni</v-app-bar-title>
+        <v-app-bar-title >
+            <v-btn to="/" size="large">eUni</v-btn>
+            
+        </v-app-bar-title>
 
 
-            <v-btn v-if="!isTutor" text to="/">Home</v-btn>
+            <v-btn v-if="!isTutor" text to="/home">Home</v-btn>
+            <v-btn v-if="!isTutor" to="/account">Account</v-btn>
             <v-btn v-if="isTutor" text to="/mybookings"  >My Bookings</v-btn>
             <v-btn v-if="isAdmin" to="/admin">Admin</v-btn>
             <v-btn  text to="/login" v-if="!isLoggedIn">Login</v-btn>
